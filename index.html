@@ -47,6 +47,11 @@
   h1 .ball{font-family:inherit}
   .dek{font-family:Georgia,serif;font-size:16px;color:var(--ink-soft);max-width:760px;margin:6px 0 0;font-style:italic}
 
+  .livestamp{margin-top:10px;font-size:11.5px;letter-spacing:.04em;color:var(--ink-soft);display:flex;align-items:center;gap:7px}
+  .livestamp .dot{width:8px;height:8px;border-radius:50%;background:#3f8a5f;box-shadow:0 0 0 0 rgba(63,138,95,.5);animation:pulse 1.8s infinite}
+  .livestamp .dot.off{background:#b8b8ad;animation:none}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(63,138,95,.45)}70%{box-shadow:0 0 0 6px rgba(63,138,95,0)}100%{box-shadow:0 0 0 0 rgba(63,138,95,0)}}
+
   /* ---- stat strip ---- */
   .stats{display:flex;flex-wrap:wrap;gap:0;margin:18px 0 26px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .stat{flex:1 1 120px;padding:12px 16px 12px 0;border-right:1px solid var(--line)}
@@ -184,6 +189,7 @@
     <div class="kicker">FIFA World Cup 2026 &middot; Canada &middot; Mexico &middot; USA</div>
     <h1>The Group Stage, <span class="ball">&#9917;</span> Charted</h1>
     <p class="dek">Twelve groups, 48 teams, and the messy arithmetic of the eight best third-place finishers. Updated live as matchday&nbsp;3 plays out.</p>
+    <div class="livestamp" id="liveStamp"></div>
   </header>
 
   <div class="stats" id="statStrip"></div>
@@ -240,7 +246,7 @@
   <p class="elimnote" id="elimNote"></p>
 
   <footer>
-    <strong>As of June 26, 2026</strong> &middot; 64 of 72 group matches played. Provisional rows update when Groups G, J, K and L conclude.<br>
+    <strong>Data <span id="asof">loading…</span></strong> &middot; scraped from Wikipedia every ~20 min by a GitHub Action; the page recomputes everything in your browser. Provisional rows resolve as the live groups finish.<br>
     Data compiled from
     <a href="https://en.wikipedia.org/wiki/2026_FIFA_World_Cup">Wikipedia</a>,
     <a href="https://www.nbcsports.com/soccer/news/2026-world-cup-group-stage-table-full-standings-for-all-12-groups">NBC&nbsp;Sports</a> and
@@ -271,7 +277,7 @@ const F = { /* flags */
   England:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",Ghana:"🇬🇭",Croatia:"🇭🇷",Panama:"🇵🇦"
 };
 
-const GROUPS = [
+const FALLBACK_GROUPS = [
   {id:"A",live:false,teams:[
     ["Mexico",3,0,0,6,0],["South Africa",1,1,1,2,3],
     ["South Korea",1,0,2,2,3],["Czechia",0,1,2,2,6]]},
@@ -336,6 +342,9 @@ function remainingFor(group, teamName){
   }
   return null;
 }
+
+/* renderAll runs every time data arrives (live fetch or offline fallback) */
+function renderAll(GROUPS, UPDATED){
 
 /* ----- scenario engine -------------------------------------------------
    Enumerate every possible result of the remaining matchday-3 games
@@ -603,6 +612,34 @@ const ENGINE = (function(){
     `<strong>Eliminated (${out.length}):</strong> ` + out.join(" · ") +
     `. <br><strong>Scotland</strong> (3 pts) and <strong>Uruguay</strong> (2 pts) finished third but are out &mdash; too many thirds will rank above them on points. ` +
     `<strong>Jordan</strong> and <strong>Panama</strong> are out on the <strong>head-to-head</strong> rule: both lost to the two teams they could otherwise have tied (Jordan to Austria &amp; Algeria; Panama to Ghana &amp; Croatia), so even a final-game win can't lift them to 3rd.`;
+})();
+
+/* ----- live "updated" stamp ----- */
+(function(){
+  const el = document.getElementById("liveStamp");
+  const asof = document.getElementById("asof");
+  if(!UPDATED){
+    if(el) el.innerHTML = `<span class="dot off"></span> Offline snapshot`;
+    if(asof) asof.textContent = "snapshot";
+    return;
+  }
+  const d = new Date(UPDATED);
+  const mins = Math.max(0, Math.round((Date.now()-d.getTime())/60000));
+  const ago = mins<1 ? "just now" : mins<60 ? mins+" min ago"
+            : Math.round(mins/60)+" hr ago";
+  const stamp = d.toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+  if(el) el.innerHTML = `<span class="dot"></span> Live &middot; updated ${ago}`;
+  if(asof) asof.textContent = "auto-updated "+stamp;
+})();
+
+} // end renderAll
+
+/* ----- bootstrap: load live data, fall back to the embedded snapshot ----- */
+(function(){
+  fetch("data.json", {cache:"no-store"})
+    .then(r => { if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(d => renderAll(d.groups, d.updated))
+    .catch(() => renderAll(FALLBACK_GROUPS, null));
 })();
 </script>
 </body>

@@ -1,0 +1,44 @@
+name: Refresh World Cup data
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"   # every 20 min (UTC; GitHub may delay)
+  workflow_dispatch: {}        # allow manual run from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wc-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Scrape latest standings
+        run: node build-data.js > data.new.json
+
+      - name: Commit only if standings changed (ignoring timestamp)
+        run: |
+          changed=1
+          if node -e "const f=require('fs');const s=p=>{const o=JSON.parse(f.readFileSync(p));delete o.updated;return JSON.stringify(o)};try{process.exit(s('data.json')===s('data.new.json')?0:1)}catch(e){process.exit(1)}"; then
+            changed=0
+          fi
+          if [ "$changed" = "0" ]; then
+            echo "No standings change — keeping existing data.json."
+            rm -f data.new.json
+          else
+            mv data.new.json data.json
+            git config user.name "wc-data-bot"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data.json
+            git commit -m "data: refresh standings ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git push
+            echo "Updated data.json."
+          fi
