@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World Cup 2026 — Group & Third-Place Tracker</title>
+<style>
+  :root{
+    --ink:#1a1a17;
+    --ink-soft:#54544c;
+    --ink-faint:#8c8c82;
+    --paper:#fbfbf8;
+    --line:#e4e3da;
+    --line-strong:#cfcec3;
+
+    /* status palette — subtle blue & green */
+    --q1-bg:#d6e9dd;        /* group winner  */
+    --q1-edge:#3f8a5f;
+    --q2-bg:#e9f3ec;        /* runner-up     */
+    --q2-edge:#7fb593;
+    --third-bg:#dfeaf4;     /* third place   */
+    --third-edge:#5b8fc0;
+    --third-in:#cfe0f0;
+    --out-fg:#a3a399;
+
+    --accent:#244a73;       /* deep blue ink for headers */
+    --accent-green:#2f6b46;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size:15px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:38px 22px 80px}
+  .serif{font-family:Georgia,"Times New Roman",serif}
+
+  /* ---- masthead ---- */
+  header.masthead{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:6px}
+  .kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  h1{font-family:Georgia,serif;font-weight:700;font-size:33px;line-height:1.08;margin:6px 0 4px;letter-spacing:-.01em}
+  h1 .ball{font-family:inherit}
+  .dek{font-family:Georgia,serif;font-size:16px;color:var(--ink-soft);max-width:760px;margin:6px 0 0;font-style:italic}
+
+  /* ---- stat strip ---- */
+  .stats{display:flex;flex-wrap:wrap;gap:0;margin:18px 0 26px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .stat{flex:1 1 120px;padding:12px 16px 12px 0;border-right:1px solid var(--line)}
+  .stat:last-child{border-right:none}
+  .stat .num{font-family:Georgia,serif;font-size:26px;line-height:1;color:var(--ink)}
+  .stat .num small{font-size:14px;color:var(--ink-faint)}
+  .stat .lbl{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-top:6px}
+
+  /* ---- section heads ---- */
+  .sec-head{margin:42px 0 4px;display:flex;align-items:baseline;gap:12px}
+  .sec-head h2{font-family:Georgia,serif;font-size:23px;margin:0;letter-spacing:-.01em}
+  .sec-head .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .sec-note{color:var(--ink-soft);font-size:13.5px;max-width:820px;margin:6px 0 22px;border-left:3px solid var(--line-strong);padding-left:12px}
+
+  /* ---- legend ---- */
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin:14px 0 26px;font-size:12px;color:var(--ink-soft)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.08)}
+  .sw.q1{background:var(--q1-bg);box-shadow:inset 3px 0 0 var(--q1-edge)}
+  .sw.q2{background:var(--q2-bg);box-shadow:inset 3px 0 0 var(--q2-edge)}
+  .sw.t3{background:var(--third-bg);box-shadow:inset 3px 0 0 var(--third-edge)}
+  .sw.out{background:#f3f3ee}
+
+  /* ---- group grid ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(348px,1fr));gap:22px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .card .chead{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 9px;border-bottom:1px solid var(--line)}
+  .card .chead .g{font-family:Georgia,serif;font-size:16px;font-weight:700}
+  .card .chead .g em{font-style:normal;color:var(--ink-faint);font-weight:400;font-size:12px;margin-left:6px}
+  .pill{font-size:10px;letter-spacing:.09em;text-transform:uppercase;padding:3px 8px;border-radius:20px;font-weight:700}
+  .pill.final{background:#eef0ec;color:#5d6b5f}
+  .pill.live{background:#fdeede;color:#9a5a12;position:relative}
+  .pill.live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#e07b1a;margin-right:6px;vertical-align:middle;animation:blink 1.4s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+  table{width:100%;border-collapse:collapse}
+  thead th{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;text-align:right;padding:8px 4px 7px}
+  thead th.team{text-align:left;padding-left:12px}
+  tbody td{font-variant-numeric:tabular-nums;text-align:right;padding:8px 4px;border-top:1px solid var(--line);font-size:13px}
+  tbody td.team{text-align:left;padding-left:12px;font-size:13px;white-space:nowrap}
+  tbody td.pts{font-weight:700;padding-right:8px}
+  thead th.team + th{padding-left:6px}
+  tbody td.pos{color:var(--ink-faint);width:16px;padding-left:8px;padding-right:2px;text-align:center}
+  .flag{font-size:14px;margin-right:5px;line-height:1}
+  .tname{font-weight:600}
+  .qlabel{font-size:9px;letter-spacing:.03em;text-transform:uppercase;margin-left:5px;padding:1px 4px;border-radius:3px;font-weight:700;vertical-align:middle;white-space:nowrap}
+  .qlabel.r32{background:var(--q1-edge);color:#fff}
+  .qlabel.t3{background:var(--third-edge);color:#fff}
+  .qlabel.out{background:#ececE6;color:#9a9a90}
+
+  tr.q1 td{background:var(--q1-bg)}
+  tr.q1 td.pos{box-shadow:inset 3px 0 0 var(--q1-edge)}
+  tr.q2 td{background:var(--q2-bg)}
+  tr.q2 td.pos{box-shadow:inset 3px 0 0 var(--q2-edge)}
+  tr.t3 td{background:var(--third-bg)}
+  tr.t3 td.pos{box-shadow:inset 3px 0 0 var(--third-edge)}
+  tr.out td{color:var(--out-fg)}
+  tr.out td.team .tname{color:var(--out-fg);font-weight:500}
+  td.gd .pos-gd{color:var(--accent-green)}
+  td.gd .neg-gd{color:#b25b4a}
+
+  .fixtures{padding:10px 14px 13px;background:#fcfaf6;border-top:1px solid var(--line);font-size:12.5px}
+  .fixtures .fx-h{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9a5a12;font-weight:700;margin-bottom:6px}
+  .fx{display:flex;justify-content:space-between;gap:8px;padding:3px 0;color:var(--ink-soft)}
+  .fx .vs{color:var(--ink-faint);font-style:italic}
+  .prov{font-size:11px;color:var(--ink-faint);font-style:italic;padding:0 14px 11px;background:#fcfaf6}
+
+  /* ---- third place table ---- */
+  .t3wrap{border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff;margin-top:6px}
+  table.third{width:100%}
+  table.third thead th{padding:11px 8px;border-bottom:1px solid var(--line-strong)}
+  table.third thead th.team{padding-left:16px}
+  table.third tbody td{padding:9px 8px;font-size:13.5px}
+  table.third tbody td.team{padding-left:16px;white-space:nowrap}
+  table.third tbody td.rank{box-shadow:inset 3px 0 0 #e2e1d8}
+  table.third tbody tr.inrace td{background:var(--third-in)}
+  table.third tbody tr.inrace td.rank{box-shadow:inset 3px 0 0 var(--third-edge)}
+  table.third tbody tr.below td{color:var(--ink-faint)}
+  table.third tbody tr.below td .tname{color:var(--ink-faint)}
+  table.third tbody tr.prov td.rank{box-shadow:inset 3px 0 0 #e0a24a}
+  .rank{font-family:Georgia,serif;font-weight:700;color:var(--accent);text-align:center;width:30px}
+  .cutoff td{padding:0!important;border:none}
+  .cutoff .bar{display:flex;align-items:center;gap:10px;padding:7px 16px;background:var(--accent);color:#fff;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+  .cutoff .bar::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.4)}
+  td.rem{text-align:left;font-size:12.5px;color:var(--ink-soft)}
+  td.rem .opp{font-weight:600;color:var(--ink)}
+  td.rem .done{color:var(--ink-faint);font-style:italic}
+  .risk-tag{font-size:9px;letter-spacing:.05em;text-transform:uppercase;background:#f4e3cf;color:#9a5a12;padding:1px 5px;border-radius:3px;margin-left:7px;font-weight:700;vertical-align:middle}
+  .prov-tag{background:#dceaf5;color:#2b5f8a}
+  .grp{color:var(--ink-faint);font-size:12px;margin-left:4px}
+
+  /* chance bar */
+  .bar-wrap{display:flex;align-items:center;gap:9px}
+  .bar-track{flex:1;height:9px;background:#edeee9;border-radius:5px;overflow:hidden;min-width:80px}
+  .bar-fill{height:100%;border-radius:5px;min-width:2px}
+  .bar-fill.hi{background:var(--q1-edge)}
+  .bar-fill.mid{background:var(--third-edge)}
+  .bar-fill.lo{background:#c79a4e}
+  .bar-pct{font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-soft);font-weight:600;white-space:nowrap;width:30px;text-align:right}
+
+  .winin{display:inline-block;margin-left:9px;font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#2f6b46;background:#d6e9dd;border:1px solid #a9cdb6;border-radius:4px;padding:2px 6px;vertical-align:middle;white-space:nowrap;transform:rotate(-2deg)}
+
+  .elimnote{margin-top:18px;font-size:12.5px;line-height:1.7;color:var(--ink-faint);border-top:1px dashed var(--line-strong);padding-top:14px}
+  .elimnote strong{color:var(--ink-soft)}
+  .el-team{white-space:nowrap;color:var(--out-fg)}
+  .el-team em{font-style:normal;color:var(--ink-faint);font-size:11px}
+
+  /* qualified board */
+  #qualBoard{margin:6px 0 4px}
+  .qrow{margin:0 0 15px}
+  .qrow .qh{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 9px}
+  .qrow .qh span{color:var(--ink-faint)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--q2-bg);border:1px solid #d3e6d9;border-radius:20px;padding:5px 11px 5px 11px;font-size:13px;white-space:nowrap}
+  .chip .cflag{font-size:15px;line-height:1}
+  .chip .cname{font-weight:600}
+  .chip .cg{color:var(--ink-faint);font-size:10.5px;font-weight:700;letter-spacing:.03em;border-left:1px solid rgba(0,0,0,.12);padding-left:7px}
+  .chip.win{background:var(--q1-bg);border-color:#bcdcc8}
+  .chip.third{background:var(--third-bg);border-color:#c6dcef}
+  .chip.tbd{background:#f1f1ec;border-color:#e0e0d8}
+
+  footer{margin-top:48px;border-top:1px solid var(--line);padding-top:16px;font-size:12px;color:var(--ink-faint)}
+  footer a{color:var(--accent)}
+  @media (max-width:560px){
+    h1{font-size:26px}
+    .grid{grid-template-columns:1fr}
+    .stat{flex-basis:50%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="kicker">FIFA World Cup 2026 &middot; Canada &middot; Mexico &middot; USA</div>
+    <h1>The Group Stage, <span class="ball">&#9917;</span> Charted</h1>
+    <p class="dek">Twelve groups, 48 teams, and the messy arithmetic of the eight best third-place finishers. Updated live as matchday&nbsp;3 plays out.</p>
+  </header>
+
+  <div class="stats" id="statStrip"></div>
+
+  <!-- QUALIFIED -->
+  <div class="sec-head">
+    <h2>Through to the Round of 32</h2>
+    <span class="tag" id="qualTag"></span>
+  </div>
+  <p class="sec-note">Teams that have mathematically secured a knockout place &mdash; they advance in every remaining scenario. Grouped by how they got there. Live-group qualifiers are in, but whether they finish 1st or 2nd is still up for grabs.</p>
+  <div id="qualBoard"></div>
+
+  <!-- GROUPS -->
+  <div class="sec-head">
+    <h2>Group standings</h2>
+    <span class="tag">A&ndash;L</span>
+  </div>
+  <p class="sec-note">Top two of each group advance to the Round of 32 automatically. Eight groups are final; <strong>Groups&nbsp;G, J, K and L</strong> finish on June&nbsp;26&ndash;27, so their positions are provisional.</p>
+  <div class="legend">
+    <span><i class="sw q1"></i> Group winner &rarr; R32</span>
+    <span><i class="sw q2"></i> Runner-up &rarr; R32</span>
+    <span><i class="sw t3"></i> 3rd place &mdash; in the play-off race</span>
+    <span><i class="sw out"></i> Eliminated</span>
+  </div>
+  <div class="grid" id="groupGrid"></div>
+
+  <!-- THE BUBBLE -->
+  <div class="sec-head">
+    <h2>The race for the last spots</h2>
+    <span class="tag" id="raceTag"></span>
+  </div>
+  <p class="sec-note">
+    Every team that has <strong>not yet clinched</strong> a Round-of-32 place and is <strong>not yet eliminated</strong> &mdash; the live bubble.
+    They are chasing the open berths: the still-undecided runner-up spots in the live groups, plus the final
+    <strong>best-third</strong> places (8 of the 12 third-placed teams advance). A team can grab a spot either by climbing to 2nd in its group <em>or</em> by finishing as one of the eight best thirds &mdash; which is why teams currently sitting 3rd <em>and</em> 4th appear here.
+    The <strong>chance</strong> bar is the share of all <span id="scenCount"></span> remaining result combinations (equally weighted) in which the team reaches the Round&nbsp;of&nbsp;32 &mdash; a combinatorial guide, not a betting line.
+    A <span class="winin" style="transform:none;margin:0">★ win &amp; in</span> tag means the team <strong>controls its own destiny</strong>: win the last game and it qualifies no matter what else happens.
+    Tiebreakers follow the <strong>new 2026 rules</strong>: points, then <strong>head-to-head</strong> among level teams (points &rarr; GD &rarr; goals), and only then overall GD and goals &mdash; a reversal from past World Cups where overall GD came first.
+  </p>
+  <div class="t3wrap">
+    <table class="third">
+      <thead>
+        <tr>
+          <th class="team">Team</th>
+          <th style="text-align:left">Group</th>
+          <th>MP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
+          <th style="text-align:left;padding-left:14px">Last game</th>
+          <th style="text-align:left;padding-left:14px;min-width:150px">Chance to reach R32</th>
+        </tr>
+      </thead>
+      <tbody id="thirdBody"></tbody>
+    </table>
+  </div>
+  <p class="elimnote" id="elimNote"></p>
+
+  <footer>
+    <strong>As of June 26, 2026</strong> &middot; 64 of 72 group matches played. Provisional rows update when Groups G, J, K and L conclude.<br>
+    Data compiled from
+    <a href="https://en.wikipedia.org/wiki/2026_FIFA_World_Cup">Wikipedia</a>,
+    <a href="https://www.nbcsports.com/soccer/news/2026-world-cup-group-stage-table-full-standings-for-all-12-groups">NBC&nbsp;Sports</a> and
+    <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/standings">FIFA.com</a>.
+    Built as a static snapshot &mdash; edit the <code>GROUPS</code> array in source to refresh.
+  </footer>
+
+</div>
+
+<script>
+/* ----- DATA -----------------------------------------------------------
+   Each team: [name, flag, W, D, L, GF, GA]
+   live:true  => matchday 3 not yet played (positions provisional)
+   fixtures   => remaining matchday-3 games for live groups
+--------------------------------------------------------------------- */
+const F = { /* flags */
+  Mexico:"🇲🇽","South Africa":"🇿🇦","South Korea":"🇰🇷",Czechia:"🇨🇿",
+  Switzerland:"🇨🇭",Canada:"🇨🇦","Bosnia & Herz.":"🇧🇦",Qatar:"🇶🇦",
+  Brazil:"🇧🇷",Morocco:"🇲🇦",Scotland:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",Haiti:"🇭🇹",
+  USA:"🇺🇸",Australia:"🇦🇺",Paraguay:"🇵🇾","Türkiye":"🇹🇷",
+  Germany:"🇩🇪","Ivory Coast":"🇨🇮",Ecuador:"🇪🇨","Curaçao":"🇨🇼",
+  Netherlands:"🇳🇱",Japan:"🇯🇵",Sweden:"🇸🇪",Tunisia:"🇹🇳",
+  Egypt:"🇪🇬",Iran:"🇮🇷",Belgium:"🇧🇪","New Zealand":"🇳🇿",
+  Spain:"🇪🇸","Cape Verde":"🇨🇻",Uruguay:"🇺🇾","Saudi Arabia":"🇸🇦",
+  France:"🇫🇷",Norway:"🇳🇴",Senegal:"🇸🇳",Iraq:"🇮🇶",
+  Argentina:"🇦🇷",Austria:"🇦🇹",Algeria:"🇩🇿",Jordan:"🇯🇴",
+  Colombia:"🇨🇴",Portugal:"🇵🇹","DR Congo":"🇨🇩",Uzbekistan:"🇺🇿",
+  England:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",Ghana:"🇬🇭",Croatia:"🇭🇷",Panama:"🇵🇦"
+};
+
+const GROUPS = [
+  {id:"A",live:false,teams:[
+    ["Mexico",3,0,0,6,0],["South Africa",1,1,1,2,3],
+    ["South Korea",1,0,2,2,3],["Czechia",0,1,2,2,6]]},
+  {id:"B",live:false,teams:[
+    ["Switzerland",2,1,0,7,3],["Canada",1,1,1,8,3],
+    ["Bosnia & Herz.",1,1,1,5,6],["Qatar",0,1,2,2,10]]},
+  {id:"C",live:false,teams:[
+    ["Brazil",2,1,0,7,1],["Morocco",2,1,0,6,3],
+    ["Scotland",1,0,2,1,4],["Haiti",0,0,3,2,8]]},
+  {id:"D",live:false,teams:[
+    ["USA",2,0,1,8,4],["Australia",1,1,1,2,2],
+    ["Paraguay",1,1,1,2,4],["Türkiye",1,0,2,3,5]]},
+  {id:"E",live:false,teams:[
+    ["Germany",2,0,1,10,4],["Ivory Coast",2,0,1,4,2],
+    ["Ecuador",1,1,1,2,2],["Curaçao",0,1,2,1,9]]},
+  {id:"F",live:false,teams:[
+    ["Netherlands",2,1,0,10,4],["Japan",1,2,0,7,3],
+    ["Sweden",1,1,1,7,7],["Tunisia",0,0,3,2,12]]},
+  {id:"G",live:true,teams:[
+    ["Egypt",1,1,0,4,2],["Iran",0,2,0,2,2],
+    ["Belgium",0,2,0,1,1],["New Zealand",0,1,1,3,5]],
+    results:[["Belgium","Egypt",1,1],["Iran","New Zealand",2,2],["Belgium","Iran",0,0],["New Zealand","Egypt",1,3]],
+    fixtures:[["Egypt","Iran","Jun 26"],["Belgium","New Zealand","Jun 26"]]},
+  {id:"H",live:false,teams:[
+    ["Spain",2,1,0,5,0],["Cape Verde",0,3,0,2,2],
+    ["Uruguay",0,2,1,3,4],["Saudi Arabia",0,2,1,1,5]]},
+  {id:"I",live:false,teams:[
+    ["France",3,0,0,10,2],["Norway",2,0,1,8,7],
+    ["Senegal",1,0,2,8,6],["Iraq",0,0,3,1,12]]},
+  {id:"J",live:true,teams:[
+    ["Argentina",2,0,0,5,0],["Austria",1,0,1,3,3],
+    ["Algeria",1,0,1,2,4],["Jordan",0,0,2,2,5]],
+    results:[["Argentina","Algeria",3,0],["Austria","Jordan",3,1],["Argentina","Austria",2,0],["Jordan","Algeria",1,2]],
+    fixtures:[["Jordan","Argentina","Jun 27"],["Algeria","Austria","Jun 27"]]},
+  {id:"K",live:true,teams:[
+    ["Colombia",2,0,0,4,1],["Portugal",1,1,0,6,1],
+    ["DR Congo",0,1,1,1,2],["Uzbekistan",0,0,2,1,8]],
+    results:[["Portugal","DR Congo",1,1],["Uzbekistan","Colombia",1,3],["Portugal","Uzbekistan",5,0],["Colombia","DR Congo",1,0]],
+    fixtures:[["Colombia","Portugal","Jun 27"],["DR Congo","Uzbekistan","Jun 27"]]},
+  {id:"L",live:true,teams:[
+    ["England",1,1,0,4,2],["Ghana",1,1,0,1,0],
+    ["Croatia",1,0,1,3,4],["Panama",0,0,2,0,2]],
+    results:[["England","Croatia",4,2],["Ghana","Panama",1,0],["England","Ghana",0,0],["Panama","Croatia",0,1]],
+    fixtures:[["Panama","England","Jun 27"],["Croatia","Ghana","Jun 27"]]}
+];
+
+/* ----- helpers ----- */
+const team = ([name,w,d,l,gf,ga])=>({
+  name, flag:F[name]||"🏳️", w,d,l,gf,ga,
+  pld:w+d+l, pts:3*w+d, gd:gf-ga
+});
+const byStanding = (a,b)=> b.pts-a.pts || b.gd-a.gd || b.gf-a.gf || a.name.localeCompare(b.name);
+const gdFmt = n => (n>0?"+":"")+n;
+const gdClass = n => n>0?"pos-gd":(n<0?"neg-gd":"");
+
+/* opponent a team still has in matchday 3 */
+function remainingFor(group, teamName){
+  if(!group.live) return null;
+  for(const [h,a] of group.fixtures){
+    if(h===teamName) return a;
+    if(a===teamName) return h;
+  }
+  return null;
+}
+
+/* ----- scenario engine -------------------------------------------------
+   Enumerate every possible result of the remaining matchday-3 games
+   (3 outcomes each) and, for each team, count in how many of those
+   scenarios it reaches the Round of 32 (group top-2, or top-8 third).
+
+   FIFA 2026 group tiebreakers (in order):
+     1. points
+     2. head-to-head points among the teams still level
+     3. head-to-head goal difference
+     4. head-to-head goals scored
+     5. overall goal difference
+     6. overall goals scored
+   (head-to-head is applied BEFORE overall GD — new for 2026.)
+   Cross-group third-place ranking has no head-to-head, so it uses
+   overall points -> GD -> goals.
+   Goal model for the two unplayed games: a win is taken as 1-0, draw 0-0.
+
+   -> CLINCHED   (advances in every scenario)
+      ELIMINATED (advances in none)
+      CONTENTION (advances in some) — the live "bubble"
+--------------------------------------------------------------------- */
+const ENGINE = (function(){
+  const recOf = {};                 // name -> [w,d,l,gf,ga]
+  GROUPS.forEach(g=>g.teams.forEach(([n,w,d,l,gf,ga])=>{recOf[n]=[w,d,l,gf,ga];}));
+  const names = Object.keys(recOf);
+
+  // remaining matches: [home, away]
+  const matches = [];
+  GROUPS.filter(g=>g.live).forEach(g=>g.fixtures.forEach(([h,a])=>matches.push([h,a])));
+  const N = matches.length, total = Math.pow(3,N);
+
+  const st = a => ({pts:3*a[0]+a[1], gd:a[3]-a[4], gf:a[3]});
+  // cross-group comparator (no head-to-head): overall pts -> gd -> gf
+  const cmp = (a,b)=> b.pts-a.pts || b.gd-a.gd || b.gf-a.gf || a.name.localeCompare(b.name);
+
+  // rank one group applying FIFA-2026 head-to-head-first tiebreakers.
+  // ov: {name:{pts,gd,gf}}, played: full match list [home,away,hg,ag]
+  function rankGroup(teamNames, ov, played){
+    const order = teamNames.slice().sort((a,b)=> ov[b].pts-ov[a].pts);
+    const out = [];
+    for(let i=0;i<order.length;){
+      let j=i; while(j<order.length && ov[order[j]].pts===ov[order[i]].pts) j++;
+      const tied = order.slice(i,j);
+      if(tied.length===1){ out.push(tied[0]); }
+      else{
+        const h={}; tied.forEach(t=>h[t]={p:0,gd:0,gf:0});
+        played.forEach(([hh,aa,hg,ag])=>{
+          if(h[hh]&&h[aa]){
+            h[hh].gf+=hg; h[hh].gd+=hg-ag; h[aa].gf+=ag; h[aa].gd+=ag-hg;
+            if(hg>ag) h[hh].p+=3; else if(ag>hg) h[aa].p+=3; else {h[hh].p++;h[aa].p++;}
+          }
+        });
+        tied.sort((a,b)=> h[b].p-h[a].p || h[b].gd-h[a].gd || h[b].gf-h[a].gf
+          || ov[b].gd-ov[a].gd || ov[b].gf-ov[a].gf || a.localeCompare(b));
+        tied.forEach(t=>out.push(t));
+      }
+      i=j;
+    }
+    return out;
+  }
+
+  const reach = {}; names.forEach(n=>reach[n]=0);
+  // for the "win and you're in" check: which match each team is in, and the
+  // result value that means a win for them (0 = home win, 2 = away win)
+  const winSpec = {}; matches.forEach(([h,a],i)=>{winSpec[h]={i,win:0};winSpec[a]={i,win:2};});
+  const winTot = {}, winAdv = {}; names.forEach(n=>{winTot[n]=0;winAdv[n]=0;});
+
+  for(let s=0; s<total; s++){
+    const rec = {}; names.forEach(n=>rec[n]=recOf[n].slice());
+    const res = [];
+    // per-live-group match list = played results + this scenario's MD3 results
+    const md3 = {}; GROUPS.filter(g=>g.live).forEach(g=>md3[g.id]=(g.results||[]).slice());
+    let x=s;
+    for(let i=0;i<N;i++){
+      const r=x%3; x=(x-r)/3; res.push(r);
+      const [h,a]=matches[i];
+      // find the group this fixture belongs to
+      const g=GROUPS.find(G=>G.live && G.fixtures.some(f=>f[0]===h&&f[1]===a));
+      if(r===0){rec[h][0]++;rec[h][3]++;rec[a][2]++;rec[a][4]++; md3[g.id].push([h,a,1,0]);}  // home win 1-0
+      else if(r===1){rec[h][1]++;rec[a][1]++;                    md3[g.id].push([h,a,0,0]);}  // draw 0-0
+      else{rec[a][0]++;rec[a][3]++;rec[h][2]++;rec[h][4]++;      md3[g.id].push([h,a,0,1]);}  // away win 1-0
+    }
+    const thirds=[]; const adv=new Set();
+    GROUPS.forEach(g=>{
+      const teamNames=g.teams.map(t=>t[0]);
+      let ranked;
+      if(g.live){
+        const ov={}; teamNames.forEach(n=>ov[n]=st(rec[n]));
+        ranked=rankGroup(teamNames, ov, md3[g.id]);
+      } else {
+        ranked=teamNames;   // settled groups: published standings order is fixed
+      }
+      adv.add(ranked[0]); adv.add(ranked[1]);
+      thirds.push({name:ranked[2], ...st(rec[ranked[2]])});
+    });
+    thirds.sort(cmp).slice(0,8).forEach(t=>adv.add(t.name));
+    adv.forEach(n=>reach[n]++);
+    // tally win-and-in only over the subset of scenarios where the team wins
+    names.forEach(n=>{
+      const w=winSpec[n];
+      if(w && res[w.i]===w.win){ winTot[n]++; if(adv.has(n)) winAdv[n]++; }
+    });
+  }
+
+  const status={}, share={}, winAndIn={};
+  names.forEach(n=>{
+    share[n]=reach[n]/total;
+    status[n]= reach[n]===total ? "clinched" : reach[n]===0 ? "out" : "live";
+    // controls own destiny: still has a game, and winning it qualifies in every case
+    winAndIn[n]= winTot[n]>0 && winAdv[n]===winTot[n] && status[n]==="live";
+  });
+  return {status, share, winAndIn, total};
+})();
+
+/* ----- stat strip ----- */
+(function(){
+  let played=0, goals=0;
+  GROUPS.forEach(g=>g.teams.forEach(t=>{played+=t[1]+t[2]+t[3];goals+=t[4];}));
+  played/=2;
+  const S=ENGINE.status, vals=Object.values(S);
+  const clinched=vals.filter(v=>v==="clinched").length;
+  const live=vals.filter(v=>v==="live").length;
+  const cells = [
+    [played+" <small>/ 72</small>","Group matches played"],
+    [goals,"Goals scored"],
+    [clinched+" <small>/ 32</small>","R32 spots clinched"],
+    [(32-clinched),"Berths still open"],
+    [live,"Teams still alive"]
+  ];
+  document.getElementById("statStrip").innerHTML =
+    cells.map(([n,l])=>`<div class="stat"><div class="num">${n}</div><div class="lbl">${l}</div></div>`).join("");
+})();
+
+/* ----- qualified board ----- */
+(function(){
+  const winners=[],runners=[],thirds=[],tbd=[];
+  GROUPS.forEach(g=>{
+    const ts=g.teams.map(team).sort(byStanding);
+    ts.forEach((t,i)=>{
+      if(ENGINE.status[t.name]!=="clinched") return;
+      const o={...t, group:g.id, pos:i+1};
+      if(g.live) tbd.push(o);
+      else if(i===0) winners.push(o);
+      else if(i===1) runners.push(o);
+      else thirds.push(o);
+    });
+  });
+  const chip=(t,cls,tag)=>`<span class="chip ${cls}"><span class="cflag">${t.flag}</span><span class="cname">${t.name}</span><span class="cg">${tag}</span></span>`;
+  const row=(label,arr,cls,tagFn)=> arr.length
+    ? `<div class="qrow"><div class="qh">${label} <span>(${arr.length})</span></div><div class="chips">${arr.map(t=>chip(t,cls,tagFn(t))).join("")}</div></div>`
+    : "";
+  const ord=["1st","2nd","3rd","4th"];
+  document.getElementById("qualBoard").innerHTML =
+      row("Group winners",  winners, "win",  t=>t.group)
+    + row("Runners-up",     runners, "",     t=>t.group)
+    + row("Best thirds &mdash; clinched", thirds, "third", t=>t.group)
+    + row("Clinched &mdash; final seeding still in play", tbd, "tbd", t=>t.group+" · "+ord[t.pos-1]);
+  const n=winners.length+runners.length+thirds.length+tbd.length;
+  document.getElementById("qualTag").textContent = n+" of 32 in";
+})();
+
+/* ----- group cards ----- */
+(function(){
+  const grid = document.getElementById("groupGrid");
+  grid.innerHTML = GROUPS.map(g=>{
+    const ts = g.teams.map(team).sort(byStanding);
+    const rows = ts.map((t,i)=>{
+      const pos=i+1;
+      const stat=ENGINE.status[t.name];          // clinched | live | out
+      let cls="out", q="";
+      if(stat==="out"){
+        cls="out"; q=`<span class="qlabel out">out</span>`;
+      } else if(pos===1){
+        cls="q1"; q=`<span class="qlabel r32">${stat==="clinched"?"R32 ✓":"R32 ?"}</span>`;
+      } else if(pos===2){
+        cls="q2"; q=`<span class="qlabel r32">${stat==="clinched"?"R32 ✓":"R32 ?"}</span>`;
+      } else if(pos===3){
+        cls="t3"; q=`<span class="qlabel t3">${stat==="clinched"?"3rd ✓":"3rd ?"}</span>`;
+      } else {
+        q=`<span class="qlabel out">${stat==="live"?"alive":"out"}</span>`;
+        cls = stat==="live" ? "t3" : "out";
+      }
+      return `<tr class="${cls}">
+        <td class="pos">${pos}</td>
+        <td class="team"><span class="flag">${t.flag}</span><span class="tname">${t.name}</span>${q}</td>
+        <td>${t.pld}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+        <td>${t.gf}</td><td>${t.ga}</td>
+        <td class="gd"><span class="${gdClass(t.gd)+'-gd'}">${gdFmt(t.gd)}</span></td>
+        <td class="pts">${t.pts}</td></tr>`;
+    }).join("");
+
+    let extra="";
+    if(g.live){
+      extra = `<div class="fixtures"><div class="fx-h">Matchday 3 &middot; to play</div>` +
+        g.fixtures.map(([h,a,d])=>
+          `<div class="fx"><span>${F[h]} ${h} <span class="vs">v</span> ${a} ${F[a]}</span><span class="vs">${d}</span></div>`
+        ).join("") + `</div><div class="prov">Positions provisional until these games finish.</div>`;
+    }
+
+    return `<div class="card">
+      <div class="chead">
+        <div class="g">Group ${g.id}${g.live?'<em>matchday 2 of 3</em>':'<em>final</em>'}</div>
+        <span class="pill ${g.live?'live':'final'}">${g.live?'Live':'Final'}</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th class="pos"></th><th class="team">Team</th>
+          <th>MP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>${extra}</div>`;
+  }).join("");
+})();
+
+/* ----- the bubble: everyone not clinched, not eliminated ----- */
+(function(){
+  const ord = ["1st","2nd","3rd","4th"];
+  // build full team metadata with current position + status + scenario share
+  const meta = [];
+  GROUPS.forEach(g=>{
+    const ts = g.teams.map(team).sort(byStanding);
+    ts.forEach((t,i)=>meta.push({
+      ...t, group:g.id, pos:i+1, live:g.live,
+      opp: remainingFor(g,t.name),
+      status: ENGINE.status[t.name],
+      share: ENGINE.share[t.name]
+    }));
+  });
+
+  const bubble = meta.filter(m=>m.status==="live")
+                     .sort((a,b)=> b.share-a.share || byStanding(a,b));
+
+  document.getElementById("scenCount").textContent = ENGINE.total.toLocaleString();
+  document.getElementById("raceTag").textContent =
+    (32 - Object.values(ENGINE.status).filter(s=>s==="clinched").length) + " spots · " + bubble.length + " teams";
+
+  const body = document.getElementById("thirdBody");
+  body.innerHTML = bubble.map(t=>{
+    const pct = Math.round(t.share*100);
+    const last = t.live
+      ? `<span class="opp">${F[t.opp]} ${t.opp}</span>`
+      : `<span class="done">group complete</span>`;
+    // bar colour: greener when safer, bluer when borderline
+    const barCls = pct>=80 ? "hi" : pct>=40 ? "mid" : "lo";
+    const sticker = ENGINE.winAndIn[t.name]
+      ? `<span class="winin" title="Win the last game and qualify in every scenario">★ win &amp; in</span>` : "";
+    return `<tr class="inrace">
+      <td class="team"><span class="flag">${t.flag}</span><span class="tname">${t.name}</span>${sticker}</td>
+      <td style="text-align:left"><span class="grp">${t.group} · ${ord[t.pos-1]}</span></td>
+      <td>${t.pld}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+      <td>${t.gf}</td><td>${t.ga}</td>
+      <td class="gd"><span class="${gdClass(t.gd)+'-gd'}">${gdFmt(t.gd)}</span></td>
+      <td class="pts" style="font-weight:700">${t.pts}</td>
+      <td class="rem">${last}</td>
+      <td class="rem"><div class="bar-wrap"><div class="bar-track"><div class="bar-fill ${barCls}" style="width:${pct}%"></div></div><span class="bar-pct">${pct}%</span></div></td>
+    </tr>`;
+  }).join("");
+
+  // eliminated note — highlight the near-misses (teams with points that are out)
+  const out = meta.filter(m=>m.status==="out")
+                  .sort((a,b)=> b.pts-a.pts || b.gd-a.gd)
+                  .map(m=>`<span class="el-team">${m.flag} ${m.name} <em>(${m.group}, ${m.pts}p${m.gd!==0?", "+gdFmt(m.gd):""})</em></span>`);
+  document.getElementById("elimNote").innerHTML =
+    `<strong>Eliminated (${out.length}):</strong> ` + out.join(" · ") +
+    `. <br><strong>Scotland</strong> (3 pts) and <strong>Uruguay</strong> (2 pts) finished third but are out &mdash; too many thirds will rank above them on points. ` +
+    `<strong>Jordan</strong> and <strong>Panama</strong> are out on the <strong>head-to-head</strong> rule: both lost to the two teams they could otherwise have tied (Jordan to Austria &amp; Algeria; Panama to Ghana &amp; Croatia), so even a final-game win can't lift them to 3rd.`;
+})();
+</script>
+</body>
+</html>
