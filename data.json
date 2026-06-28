@@ -1,5 +1,5 @@
 {
- "updated": "2026-06-28T02:07:16.846Z",
+ "updated": "2026-06-28T05:07:48.205Z",
  "groups": [
   {
    "id": "A",
@@ -345,77 +345,39 @@
   },
   {
    "id": "J",
-   "live": true,
+   "live": false,
    "teams": [
     [
      "Argentina",
-     2,
-     0,
-     0,
-     5,
-     0
-    ],
-    [
-     "Austria",
-     1,
-     0,
-     1,
      3,
-     3
-    ],
-    [
-     "Algeria",
-     1,
-     0,
-     1,
-     2,
-     4
-    ],
-    [
-     "Jordan",
      0,
      0,
-     2,
-     2,
-     5
-    ]
-   ],
-   "results": [
-    [
-     "Argentina",
-     "Algeria",
-     3,
-     0
-    ],
-    [
-     "Austria",
-     "Jordan",
-     3,
+     8,
      1
     ],
     [
-     "Argentina",
      "Austria",
-     2,
-     0
+     1,
+     1,
+     1,
+     6,
+     6
     ],
     [
-     "Jordan",
      "Algeria",
      1,
-     2
-    ]
-   ],
-   "fixtures": [
-    [
-     "Algeria",
-     "Austria",
-     "Jun 27"
+     1,
+     1,
+     5,
+     7
     ],
     [
      "Jordan",
-     "Argentina",
-     "Jun 27"
+     0,
+     0,
+     3,
+     3,
+     8
     ]
    ]
   },
