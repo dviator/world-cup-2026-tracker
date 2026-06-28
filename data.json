@@ -1,5 +1,5 @@
 {
- "updated": "2026-06-27T23:20:46.170Z",
+ "updated": "2026-06-28T02:07:16.846Z",
  "groups": [
   {
    "id": "A",
@@ -421,12 +421,12 @@
   },
   {
    "id": "K",
-   "live": true,
+   "live": false,
    "teams": [
     [
      "Colombia",
      2,
-     0,
+     1,
      0,
      4,
      1
@@ -434,64 +434,26 @@
     [
      "Portugal",
      1,
-     1,
+     2,
      0,
      6,
      1
     ],
     [
      "DR Congo",
-     0,
      1,
      1,
      1,
-     2
-    ],
-    [
-     "Uzbekistan",
-     0,
-     0,
-     2,
-     1,
-     8
-    ]
-   ],
-   "results": [
-    [
-     "Portugal",
-     "DR Congo",
-     1,
-     1
-    ],
-    [
-     "Uzbekistan",
-     "Colombia",
-     1,
+     4,
      3
     ],
     [
-     "Portugal",
      "Uzbekistan",
-     5,
-     0
-    ],
-    [
-     "Colombia",
-     "DR Congo",
-     1,
-     0
-    ]
-   ],
-   "fixtures": [
-    [
-     "Colombia",
-     "Portugal",
-     "Jun 27"
-    ],
-    [
-     "DR Congo",
-     "Uzbekistan",
-     "Jun 27"
+     0,
+     0,
+     3,
+     2,
+     11
     ]
    ]
   },
